@@ -1,4 +1,4 @@
-#SZKOŁA JĘZYKOWA
+--SZKOŁA JĘZYKOWA
 
 SET DATEFORMAT ymd;
 
@@ -8,7 +8,7 @@ CREATE TABLE adres (
   nr_mieszkania VARCHAR(12),
   ulica VARCHAR(50),
   kod_pocztowy VARCHAR(12),
-  miejscowosc VARCHAR(50),
+  miejscowosc VARCHAR(50git),
   kraj VARCHAR(50) DEFAULT 'Polska'
 );
 
