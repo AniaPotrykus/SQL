@@ -165,3 +165,64 @@ Jeden uczeń może być w wielu grupach (zajęcia indywidualne to jednoosobowa g
 Zajęcia odbywają się w konkretnych salach (typ = interaktywna, tradycyjna, komputerowa; zależy od grupy). 
 Adres – jeden klient może mieć więcej adresów, adres może się powtarzać (płacący i student, lub nauczyciel mogą mieć ten sam adres)
 */
+
+-- ZAPYTANIA
+
+--Administracja szkolna mogłaby wykorzystać poniższe zapytania aby:
+
+-- sprawdzić jaki nauczyciel posiada status studenta:
+SELECT * FROM nauczyciel where status_studenta = 1
+
+-- sprawdzić czy dla danego studenta termin płatności był uiszczony w danym miesiącu:
+SELECT imie_p, nazwisko_p, termin_platnosci from placacy WHERE month(termin_platnosci) = 5 
+ORDER BY nazwisko_p asc
+
+-- sprawdzić jacy studenci należą do jakiej grupy i zobaczyć liczbę studentów:
+SELECT grupa.nazwa_grupy, student.nazwisko_s, student.imie_s, COUNT(student.id_student) AS 'liczba studentow'
+from grupa left join student_na_grupe
+on grupa.id_grupa = student_na_grupe.id_grupa
+left join student
+on student_na_grupe.id_student = student.id_student
+GROUP BY grupa.nazwa_grupy, student.nazwisko_s, student.imie_s
+
+-- sprawdzić adres zamieszkania (tylko miejscowość) nauczycieli:
+SELECT adres.miejscowosc, nauczyciel.imie_n, nauczyciel.nazwisko_n
+FROM adres left join nauczyciel
+on adres.id_adres = nauczyciel.id_adres
+ORDER BY miejscowosc ASC
+
+-- sprawdzić jaki płacący jest odpowiedzialny za jakiego studenta:
+SELECT student.imie_s, student.nazwisko_s, placacy.imie_p, placacy.nazwisko_p
+FROM student inner join placacy
+ON student.id_placacy = placacy.id_placacy
+ORDER BY student.nazwisko_s ASC
+
+-- sprawdzić ile tygodni minęło od rozpoczęcia zajęć dla każdej grupy:
+SELECT nazwa_grupy, DATEDIFF(week, data_rozpoczecia_roku, GETDATE()) AS 'tygodnie odbyte' from grupa
+
+-- sprawdzić czy i kiedy zajęcia dla danego studenta są opłacone i w jaki sposób
+SELECT student.imie_s, student.nazwisko_s, placacy.sposob_platnosci, placacy.termin_platnosci
+FROM student
+left JOIN placacy ON student.id_placacy = placacy.id_placacy
+
+-- sprawdzić jakie grupy uczą się języka angielskiego, kiedy i na jakim poziomie. 
+SELECT nazwa_grupy, dzien_tygodnia, poziom_zaawansowania FROM grupa WHERE nazwa_grupy LIKE 'Ang%'
+
+-- sprawdzić jaki uczeń uczęszcza na jaki typ zajęć i ile one kosztują:
+SELECT student.nazwisko_s, student.imie_s, typ_zajec.nazwa, typ_zajec.cena
+FROM student left join student_na_grupe
+ON student.id_student = student_na_grupe.id_student
+left join grupa
+on student_na_grupe.id_grupa = grupa.id_grupa
+left join typ_zajec
+ON grupa.id_typ_zajec = typ_zajec.id_typ_zajec
+ORDER BY student.nazwisko_s ASC
+
+-- sprawdzić jaki nauczyciel uczy jaką grupę:
+SELECT nauczyciel.nazwisko_n, nauczyciel.imie_n, grupa.nazwa_grupy
+FROM nauczyciel left join kto_czego_kogo_uczy
+on nauczyciel.id_nauczyciel = kto_czego_kogo_uczy.id_nauczyciel
+left join grupa
+on kto_czego_kogo_uczy.id_grupa = grupa.id_grupa
+ORDER BY nauczyciel.nazwisko_n ASC
+
