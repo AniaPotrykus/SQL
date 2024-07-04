@@ -226,3 +226,128 @@ left join grupa
 on kto_czego_kogo_uczy.id_grupa = grupa.id_grupa
 ORDER BY nauczyciel.nazwisko_n ASC
 
+
+
+--PROCEDURY: 
+/* PROCEDURA DODAJ ADRES 
+Procedura dodaj_adres jest odpowiedzialna za dodawanie nowego rekordu do tabeli adres. Umożliwia szybkie dodanie nowego adresu do bazy danych. */ 
+
+CREATE PROCEDURE dodaj_adres  
+    @nr_domu VARCHAR(12),  
+    @nr_mieszkania VARCHAR(12),  
+    @ulica VARCHAR(50),  
+    @kod_pocztowy VARCHAR(12),  
+    @miejscowosc VARCHAR(50) 
+AS 
+    INSERT INTO adres (nr_domu, nr_mieszkania, ulica, kod_pocztowy, miejscowosc) 
+    VALUES (@nr_domu, @nr_mieszkania, @ulica, @kod_pocztowy, @miejscowosc); 
+
+/* Przykład użycia: */ 
+EXEC dodaj_adres  
+    @nr_domu = 7,  
+    @nr_mieszkania = 14,  
+    @ulica = 'Pogodna',  
+    @kod_pocztowy = '84-100',  
+    @miejscowosc = 'Puck'; 
+
+/*PROCEDURA DODAJ GRUPĘ 
+Procedura dodaj_grupe jest odpowiedzialna za dodawanie nowego rekordu do tabeli grupa. Umożliwia administratorom dodanie nowej grupy zajęć do bazy danych wraz z wszystkimi szczegółami. */ 
+
+CREATE PROCEDURE dodaj_grupe  
+@id_typ_zajec int,  
+    @nazwa_grupy varchar(12),  
+    @id_nauczyciel int,  
+    @id_sala int,  
+    @dzien_tygodnia varchar(12),  
+    @id_jezyk int,  
+    @poziom_zaawansowania varchar(50),  
+    @godzina time,  
+    @data_rozpoczecia_roku date,  
+    @data_zakonczenia_roku date 
+as 
+insert into grupa (id_typ_zajec, nazwa_grupy, id_nauczyciel, id_sala, dzien_tygodnia, id_jezyk, poziom_zaawansowania, godzina, 
+data_rozpoczecia_roku, data_zakonczenia_roku)  
+
+VALUES (@id_typ_zajec, @nazwa_grupy, @id_nauczyciel, @id_sala, @dzien_tygodnia, @id_jezyk, @poziom_zaawansowania, @godzina, 
+@data_rozpoczecia_roku, @data_zakonczenia_roku)  
+
+
+/* Przykład użycia: */ 
+EXEC dodaj_grupe  
+    @id_typ_zajec = 2,  
+    @nazwa_grupy = 'Ang2',  
+    @id_nauczyciel = 3,  
+    @id_sala = 2,  
+    @dzien_tygodnia = 'Wtorek',  
+    @id_jezyk = 1, 
+    @poziom_zaawansowania = 'zaawansowany',  
+    @godzina = '12:00:00',  
+    @data_rozpoczecia_roku = '2023-09-01',  
+    @data_zakonczenia_roku = '2024-06-21'; 
+ 
+
+--FUNCKJE 
+/* FUNKCJA NAUCZYCIELE LICZBA 
+Funkcja ta wylicza ile jest nauczycieli uczących danego języka. */ 
+
+create function nauczyciele_liczba (@nazwa_jezyka varchar(12)) 
+returns INT 
+AS 
+BEGIN 
+return (SELECT COUNT(kto_czego_kogo_uczy.id_nauczyciel) AS liczba 
+FROM jezyk 
+LEFT JOIN kto_czego_kogo_uczy 
+ON jezyk.id_jezyk = kto_czego_kogo_uczy.id_jezyk 
+where jezyk.nazwa_jezyk = @nazwa_jezyka) 
+end 
+
+/* Przykład użycia */ 
+select dbo.nauczyciele_liczba('angielski') 
+
+
+/* FUKCJA LICZBA STUDENTÓW: 
+Funkcja liczba_studentów jest odpowiedzialna za wyliczenie, ile studentów należy do danej grupy. */ 
+
+CREATE FUNCTION liczba_studentow (@id_grupa INT) 
+RETURNS INT 
+AS 
+BEGIN 
+    RETURN (SELECT COUNT(*) FROM student_na_grupe WHERE id_grupa = @id_grupa); 
+END; 
+
+/* Przykład użycia: */ 
+SELECT dbo.liczba_studentow(1) AS Liczba_studentow_w_Grupa_1; 
+
+ 
+
+--WIDOKI: 
+/* WIDOK JAKI NAUCZYCIEL 
+Widok ten łączy tabele nauczyciel, kto_czego_kogo_uczy i grupa, aby pokazać, którzy nauczyciele uczą w poszczególnych grupach. */ 
+
+CREATE VIEW jaki_nauczyciel 
+AS 
+SELECT nauczyciel.nazwisko, nauczyciel.imie, grupa.nazwa_grupy 
+FROM nauczyciel left join kto_czego_kogo_uczy 
+on nauczyciel.id_nauczyciel = kto_czego_kogo_uczy.id_nauczyciel 
+left join grupa 
+on kto_czego_kogo_uczy.id_grupa = grupa.id_grupa  
+
+/* Przykład użycia: */ 
+SELECT * from jaki_nauczyciel where nazwa_grupy = 'Ang1' 
+
+
+/*WIDOK STUDENT TYP ZAJEC I CENA 
+Widok ten łączy dane studentów z informacjami o grupach, do których uczęszczają, typie zajęć oraz ich cenie. */ 
+
+CREATE VIEW student_typ_zajec_i_cena 
+AS 
+SELECT student.nazwisko, student.imie, typ_zajec.nazwa, typ_zajec.cena 
+FROM student left join student_na_grupe 
+ON student.id_student = student_na_grupe.id_student 
+left join grupa 
+on student_na_grupe.id_grupa = grupa.id_grupa 
+left join typ_zajec 
+ON grupa.id_typ_zajec = typ_zajec.id_typ_zajec 
+ 
+/* Przykład użycia */ 
+SELECT * from student_typ_zajec_i_cena 
